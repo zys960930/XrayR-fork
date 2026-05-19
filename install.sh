@@ -103,11 +103,16 @@ install() {
     # 重载 systemd
     systemctl daemon-reload
 
+    # 设置开机自启
+    systemctl enable XrayR
+    echo -e "${green}  ✓ 已设置开机自启${plain}"
+
     echo ""
     echo -e "${green}===== 安装完成 =====${plain}"
     echo ""
     echo -e "配置文件: ${yellow}${CONFIG_DIR}/config.yml${plain}"
     echo -e "启动服务: ${yellow}XrayR start${plain}"
+    echo -e "设置自启: ${yellow}XrayR enable${plain}"
     echo -e "查看状态: ${yellow}XrayR status${plain}"
     echo ""
     echo -e "${green}请先编辑配置文件，修改你的面板信息:${plain}"
