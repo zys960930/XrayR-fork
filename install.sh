@@ -87,6 +87,10 @@ install() {
                 apt-get install -y $cmd >/dev/null 2>&1
             elif command -v yum >/dev/null 2>&1; then
                 yum install -y $cmd >/dev/null 2>&1
+            elif command -v dnf >/dev/null 2>&1; then
+                dnf install -y $cmd >/dev/null 2>&1
+            elif command -v apk >/dev/null 2>&1; then
+                apk add $cmd >/dev/null 2>&1
             fi
         fi
     done
@@ -106,19 +110,35 @@ install() {
     else
         cd /tmp
         mkdir -p /tmp/xrayr-extract
-        unzip -o "$TMP_ZIP" -d /tmp/xrayr-extract/
-        if [[ $? -ne 0 ]]; then
-            echo -e "${red}解压失败，尝试直接使用压缩包中的文件...${plain}"
-            # 某些版本可能直接是二进制文件而非zip
+        # 尝试解压，如果失败则直接用下载的文件
+        if command -v unzip >/dev/null 2>&1; then
+            unzip -o "$TMP_ZIP" -d /tmp/xrayr-extract/ 2>&1 | tail -3
+        fi
+        # 递归查找解压出的 XrayR 二进制（可能在子目录中）
+        if [[ -d /tmp/xrayr-extract ]]; then
+            file_count=$(find /tmp/xrayr-extract/ -type f 2>/dev/null | wc -l)
+            if [[ $file_count -gt 0 ]]; then
+                found=$(find /tmp/xrayr-extract/ -type f -size +1M 2>/dev/null | head -1)
+                if [[ -n "$found" ]]; then
+                    cp "$found" "$INSTALL_DIR/XrayR"
+                    echo "  ✓ XrayR 二进制安装完成 (解压于 $found)"
+                else
+                    echo -e "${yellow}  未在解压目录找到大文件，尝试直接复制下载的文件${plain}"
+                    cp "$TMP_ZIP" "$INSTALL_DIR/XrayR" 2>/dev/null
+                fi
+            else
+                # 解压目录为空，直接复制下载的文件
+                cp "$TMP_ZIP" "$INSTALL_DIR/XrayR" 2>/dev/null
+            fi
+        else
+            # unzip 不可用，直接复制
             cp "$TMP_ZIP" "$INSTALL_DIR/XrayR" 2>/dev/null
         fi
-        find /tmp/xrayr-extract/ -name "XrayR" -type f -exec mv {} "$INSTALL_DIR/XrayR" \; 2>/dev/null
         if [[ -f "$INSTALL_DIR/XrayR" ]]; then
             chmod +x "$INSTALL_DIR/XrayR"
-            echo "  ✓ XrayR 二进制安装完成"
+            echo "  ✓ XrayR 二进制已就绪"
         else
-            echo -e "${red}XrayR 二进制未找到，解压后文件名可能与预期不符${plain}"
-            ls -la /tmp/xrayr-extract/ 2>/dev/null || true
+            echo -e "${red}安装失败，请手动解压 $TMP_ZIP 并将 XrayR 文件放到 $INSTALL_DIR/${plain}"
         fi
         rm -rf /tmp/xrayr-extract "$TMP_ZIP"
     fi
