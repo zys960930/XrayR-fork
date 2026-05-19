@@ -1,7 +1,7 @@
 #!/bin/bash
 # XrayR Install Script (Community Fork)
 # 原始仓库 XrayR-project/XrayR-release 已删除
-# 二进制来自 XrayR-project/XrayR/releases (源码仓库仍可用)
+# 二进制来自 zys960930/XrayR-fork/releases
 # Fork 维护: https://github.com/zys960930/XrayR-fork
 
 red='\033[0;31m'
@@ -11,7 +11,7 @@ plain='\033[0m'
 
 FORK_REPO="zys960930/XrayR-fork"
 FORK_RAW="https://raw.githubusercontent.com/${FORK_REPO}/master"
-RELEASE_BASE="https://github.com/XrayR-project/XrayR/releases/latest/download"
+RELEASE_BASE="https://github.com/zys960930/XrayR-fork/releases/download/v1.0.0"
 INSTALL_DIR="/usr/local/XrayR"
 CONFIG_DIR="/etc/XrayR"
 SERVICE_FILE="/etc/systemd/system/XrayR.service"
