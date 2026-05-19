@@ -79,6 +79,18 @@ install() {
     BINARY_NAME=$(detect_arch)
     echo "  检测到架构: $BINARY_NAME"
 
+    # 检查依赖
+    for cmd in curl unzip; do
+        if ! command -v $cmd >/dev/null 2>&1; then
+            echo -e "${yellow}  正在安装 $cmd...${plain}"
+            if command -v apt-get >/dev/null 2>&1; then
+                apt-get install -y $cmd >/dev/null 2>&1
+            elif command -v yum >/dev/null 2>&1; then
+                yum install -y $cmd >/dev/null 2>&1
+            fi
+        fi
+    done
+
     DOWNLOAD_URL="${RELEASE_BASE}/${BINARY_NAME}"
     TMP_ZIP="/tmp/${BINARY_NAME}"
 
@@ -93,11 +105,22 @@ install() {
         echo "  然后执行: chmod +x $INSTALL_DIR/XrayR && systemctl start XrayR"
     else
         cd /tmp
-        unzip -o "$TMP_ZIP" -d /tmp/xrayr-extract/ >/dev/null 2>&1
-        find /tmp/xrayr-extract/ -name "XrayR" -type f -exec mv {} "$INSTALL_DIR/XrayR" \;
-        chmod +x "$INSTALL_DIR/XrayR"
+        mkdir -p /tmp/xrayr-extract
+        unzip -o "$TMP_ZIP" -d /tmp/xrayr-extract/
+        if [[ $? -ne 0 ]]; then
+            echo -e "${red}解压失败，尝试直接使用压缩包中的文件...${plain}"
+            # 某些版本可能直接是二进制文件而非zip
+            cp "$TMP_ZIP" "$INSTALL_DIR/XrayR" 2>/dev/null
+        fi
+        find /tmp/xrayr-extract/ -name "XrayR" -type f -exec mv {} "$INSTALL_DIR/XrayR" \; 2>/dev/null
+        if [[ -f "$INSTALL_DIR/XrayR" ]]; then
+            chmod +x "$INSTALL_DIR/XrayR"
+            echo "  ✓ XrayR 二进制安装完成"
+        else
+            echo -e "${red}XrayR 二进制未找到，解压后文件名可能与预期不符${plain}"
+            ls -la /tmp/xrayr-extract/ 2>/dev/null || true
+        fi
         rm -rf /tmp/xrayr-extract "$TMP_ZIP"
-        echo "  ✓ XrayR 二进制安装完成"
     fi
 
     # 重载 systemd
