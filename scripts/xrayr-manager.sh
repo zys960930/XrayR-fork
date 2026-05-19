@@ -84,7 +84,7 @@ before_show_menu() {
 }
 
 install() {
-    bash <(curl -Ls https://raw.githubusercontent.com/XrayR-project/XrayR-release/master/install.sh)
+    curl -sL "https://raw.githubusercontent.com/zys960930/XrayR-fork/master/install.sh" -o /tmp/install-xrayr.sh && bash /tmp/install-xrayr.sh install
     if [[ $? == 0 ]]; then
         if [[ $# == 0 ]]; then
             start
@@ -108,7 +108,7 @@ update() {
 #        fi
 #        return 0
 #    fi
-    bash <(curl -Ls https://raw.githubusercontent.com/XrayR-project/XrayR-release/master/install.sh) $version
+    curl -sL "https://raw.githubusercontent.com/zys960930/XrayR-fork/master/install.sh" -o /tmp/install-xrayr.sh && bash /tmp/install-xrayr.sh install $version
     if [[ $? == 0 ]]; then
         echo -e "${green}更新完成，已自动重启 XrayR，请使用 XrayR log 查看运行日志${plain}"
         exit
@@ -270,7 +270,7 @@ install_bbr() {
 }
 
 update_shell() {
-    wget -O /usr/bin/XrayR -N --no-check-certificate https://raw.githubusercontent.com/XrayR-project/XrayR-release/master/XrayR.sh
+    curl -sL "https://raw.githubusercontent.com/zys960930/XrayR-fork/master/scripts/xrayr-manager.sh" -o /usr/bin/XrayR && chmod +x /usr/bin/XrayR
     if [[ $? != 0 ]]; then
         echo ""
         echo -e "${red}下载脚本失败，请检查本机能否连接 Github${plain}"
