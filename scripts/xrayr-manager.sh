@@ -84,7 +84,15 @@ before_show_menu() {
 }
 
 install() {
-    curl -sL "https://raw.githubusercontent.com/zys960930/XrayR-fork/master/install.sh" -o /tmp/install-xrayr.sh && bash /tmp/install-xrayr.sh install
+    local version=""
+    if [[ $# > 0 ]]; then
+        version="$2"
+    fi
+    if [[ -n "$version" ]]; then
+        XRAYR_VERSION="$version" bash <(curl -sL "https://raw.githubusercontent.com/zys960930/XrayR-fork/master/install.sh") install
+    else
+        bash <(curl -sL "https://raw.githubusercontent.com/zys960930/XrayR-fork/master/install.sh") install
+    fi
     if [[ $? == 0 ]]; then
         if [[ $# == 0 ]]; then
             start
@@ -95,20 +103,18 @@ install() {
 }
 
 update() {
+    local version=""
     if [[ $# == 0 ]]; then
-        echo && echo -n -e "输入指定版本(默认最新版): " && read version
+        echo && echo -n -e "输入指定版本(默认最新版): " && read version_input
+        version="$version_input"
     else
         version=$2
     fi
-#    confirm "本功能会强制重装当前最新版，数据不会丢失，是否继续?" "n"
-#    if [[ $? != 0 ]]; then
-#        echo -e "${red}已取消${plain}"
-#        if [[ $1 != 0 ]]; then
-#            before_show_menu
-#        fi
-#        return 0
-#    fi
-    curl -sL "https://raw.githubusercontent.com/zys960930/XrayR-fork/master/install.sh" -o /tmp/install-xrayr.sh && bash /tmp/install-xrayr.sh install $version
+    if [[ -n "$version" ]]; then
+        XRAYR_VERSION="$version" bash <(curl -sL "https://raw.githubusercontent.com/zys960930/XrayR-fork/master/install.sh") install
+    else
+        bash <(curl -sL "https://raw.githubusercontent.com/zys960930/XrayR-fork/master/install.sh") install
+    fi
     if [[ $? == 0 ]]; then
         echo -e "${green}更新完成，已自动重启 XrayR，请使用 XrayR log 查看运行日志${plain}"
         exit
@@ -387,7 +393,7 @@ show_usage() {
 show_menu() {
     echo -e "
   ${green}XrayR 后端管理脚本，${plain}${red}不适用于docker${plain}
---- https://github.com/XrayR-project/XrayR ---
+--- https://github.com/zys960930/XrayR-fork ---
   ${green}0.${plain} 修改配置
 ————————————————
   ${green}1.${plain} 安装 XrayR

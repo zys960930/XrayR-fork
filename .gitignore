@@ -4,3 +4,4 @@ XrayR
 # Geo data files (can be downloaded separately)
 config/geoip.dat
 config/geosite.dat
+.gstack/
