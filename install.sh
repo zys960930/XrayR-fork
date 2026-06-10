@@ -59,10 +59,28 @@ install() {
     mkdir -p "$INSTALL_DIR"
     mkdir -p "$CONFIG_DIR"
 
-    # 1. 下载配置文件
+    # 检测已有配置文件并备份
+    CONFIG_BACKUP=""
+    for f in config.yml custom_inbound.json custom_outbound.json dns.json route.json rulelist; do
+        if [[ -f "${CONFIG_DIR}/${f}" ]]; then
+            CONFIG_BACKUP="yes"
+            break
+        fi
+    done
+    if [[ -n "$CONFIG_BACKUP" ]]; then
+        backup_dir="${CONFIG_DIR}.bak.$(date +%Y%m%d%H%M%S)"
+        echo -e "${yellow}  检测到已有配置文件，备份至: ${backup_dir}${plain}"
+        cp -r "$CONFIG_DIR" "$backup_dir"
+    fi
+
+    # 1. 下载配置文件（跳过已存在的）
     echo -e "${yellow}[1/4] 下载配置文件...${plain}"
     for f in config.yml custom_inbound.json custom_outbound.json dns.json route.json rulelist; do
-        curl -sL "${FORK_RAW}/config/${f}" -o "${CONFIG_DIR}/${f}" && echo "  ✓ ${f}" || echo "  ✗ ${f}"
+        if [[ -f "${CONFIG_DIR}/${f}" ]]; then
+            echo -e "  ${yellow}${f} 已存在，跳过${plain}"
+        else
+            curl -sL "${FORK_RAW}/config/${f}" -o "${CONFIG_DIR}/${f}" && echo "  ✓ ${f}" || echo "  ✗ ${f}"
+        fi
     done
 
     # 2. 下载 systemd 服务文件
