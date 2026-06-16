@@ -48,10 +48,6 @@ download() {
     curl -fL --retry 3 --retry-delay 3 "$url" -o "$output"
 }
 
-download_stdout() {
-    curl -sSL --retry 2 --retry-delay 3 "$1"
-}
-
 # ========== 架构检测（支持 10+ 种架构） ==========
 detect_asset_name() {
     local arch
