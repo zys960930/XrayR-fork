@@ -74,28 +74,23 @@ detect_asset_name() {
     esac
 }
 
-# ========== 从 GitHub API 获取最新版本（支持 jq 和 sed 两种方式） ==========
+# ========== 获取最新版本号 ==========
 latest_version() {
-    local payload tag
-    payload="$(download_stdout "${API_BASE}/repos/${FORK_REPO}/releases/latest" 2>/dev/null)" || {
-        echo -e "${yellow}  API请求失败，使用硬编码默认版本 v1.0.0${plain}"
+    # 尝试从 API 获取，失败则返回默认版本
+    local tmpfile="/tmp/xrayr-latest-version.$$"
+    curl -sSL --retry 2 --retry-delay 3 "${API_BASE}/repos/${FORK_REPO}/releases/latest" -o "$tmpfile" 2>/dev/null || {
         echo "v1.0.0"
+        rm -f "$tmpfile"
         return
     }
-    # 优先使用 jq（更可靠）
+    local tag=""
     if command -v jq >/dev/null 2>&1; then
-        tag="$(echo "$payload" | jq -r '.tag_name // empty' 2>/dev/null)"
+        tag="$(jq -r '.tag_name // empty' "$tmpfile" 2>/dev/null)"
     else
-        # 降级使用 grep/sed
-        tag="$(echo "$payload" | grep -o '"tag_name":"[^"]*"' | cut -d'"' -f4 2>/dev/null)"
+        tag="$(grep -o '"tag_name":"[^"]*"' "$tmpfile" 2>/dev/null | cut -d'"' -f4)"
     fi
-    if [[ -z "$tag" || "$tag" == "null" ]]; then
-        # 检查是否是 API 限频
-        if echo "$payload" | grep -qi "rate limit\|API rate limit" 2>/dev/null; then
-            echo -e "${yellow}  GitHub API 限频，使用默认版本 v1.0.0${plain}"
-        else
-            echo -e "${yellow}  无法解析版本号，使用默认版本 v1.0.0${plain}"
-        fi
+    rm -f "$tmpfile"
+    if [[ -z "$tag" ]]; then
         echo "v1.0.0"
         return
     fi
