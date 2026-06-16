@@ -72,10 +72,17 @@ detect_asset_name() {
 
 # ========== 获取最新版本号 ==========
 latest_version() {
-    # 尝试从 API 获取，失败则返回默认版本
+    # 1. 尝试从 GitHub API 获取
     local tmpfile="/tmp/xrayr-latest-version.$$"
     curl -sSL --retry 2 --retry-delay 3 "${API_BASE}/repos/${FORK_REPO}/releases/latest" -o "$tmpfile" 2>/dev/null || {
-        echo "v1.0.0"
+        # 2. API 失败，尝试从 raw 文件获取
+        local ver
+        ver="$(curl -sSL --retry 2 --retry-delay 3 "${FORK_RAW}/VERSION" 2>/dev/null | head -1 | tr -d '[:space:]')"
+        if [[ -n "$ver" ]]; then
+            echo "$ver"
+        else
+            echo "v1.0.0"
+        fi
         rm -f "$tmpfile"
         return
     }
