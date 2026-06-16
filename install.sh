@@ -49,7 +49,7 @@ download() {
 }
 
 download_stdout() {
-    curl -fsSL --retry 3 --retry-delay 3 "$1"
+    curl -sSL --retry 2 --retry-delay 3 "$1"
 }
 
 # ========== 架构检测（支持 10+ 种架构） ==========
@@ -74,12 +74,31 @@ detect_asset_name() {
     esac
 }
 
-# ========== 从 GitHub API 获取最新版本 ==========
+# ========== 从 GitHub API 获取最新版本（支持 jq 和 sed 两种方式） ==========
 latest_version() {
     local payload tag
-    payload="$(download_stdout "${API_BASE}/repos/${FORK_REPO}/releases/latest")"
-    tag="$(echo "$payload" | sed -n 's/.*"tag_name":[[:space:]]*"\([^"]*\)".*/\1/p' | head -n 1)"
-    [[ -n "$tag" ]] || fail "无法获取最新版本号"
+    payload="$(download_stdout "${API_BASE}/repos/${FORK_REPO}/releases/latest" 2>/dev/null)" || {
+        echo -e "${yellow}  API请求失败，使用硬编码默认版本 v1.0.0${plain}"
+        echo "v1.0.0"
+        return
+    }
+    # 优先使用 jq（更可靠）
+    if command -v jq >/dev/null 2>&1; then
+        tag="$(echo "$payload" | jq -r '.tag_name // empty' 2>/dev/null)"
+    else
+        # 降级使用 grep/sed
+        tag="$(echo "$payload" | grep -o '"tag_name":"[^"]*"' | cut -d'"' -f4 2>/dev/null)"
+    fi
+    if [[ -z "$tag" || "$tag" == "null" ]]; then
+        # 检查是否是 API 限频
+        if echo "$payload" | grep -qi "rate limit\|API rate limit" 2>/dev/null; then
+            echo -e "${yellow}  GitHub API 限频，使用默认版本 v1.0.0${plain}"
+        else
+            echo -e "${yellow}  无法解析版本号，使用默认版本 v1.0.0${plain}"
+        fi
+        echo "v1.0.0"
+        return
+    fi
     echo "$tag"
 }
 
