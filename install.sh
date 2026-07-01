@@ -32,13 +32,15 @@ install_dep() {
     local cmd="$1"
     echo -e "${yellow}  正在安装 $cmd...${plain}"
     if command -v apt-get >/dev/null 2>&1; then
-        apt-get install -y "$cmd" >/dev/null 2>&1
+        export DEBIAN_FRONTEND=noninteractive
+        apt-get update -qq 2>/dev/null || true
+        apt-get install -y "$cmd"
     elif command -v yum >/dev/null 2>&1; then
-        yum install -y "$cmd" >/dev/null 2>&1
+        yum install -y "$cmd"
     elif command -v dnf >/dev/null 2>&1; then
-        dnf install -y "$cmd" >/dev/null 2>&1
+        dnf install -y "$cmd"
     elif command -v apk >/dev/null 2>&1; then
-        apk add "$cmd" >/dev/null 2>&1
+        apk add "$cmd"
     fi
     command -v "$cmd" >/dev/null 2>&1 || fail "$cmd 安装失败，请手动安装"
 }
